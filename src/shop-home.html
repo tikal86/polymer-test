@@ -1,0 +1,178 @@
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="shop-button.html">
+<link rel="import" href="shop-image.html">
+
+<dom-module id="shop-home">
+
+  <template>
+
+    <style include="shop-button">
+
+      .image-link {
+        outline: none;
+      }
+
+      .image-link > shop-image::after {
+        display: block;
+        content: '';
+        position: absolute;
+        transition-property: opacity;
+        transition-duration: 0s;
+        transition-delay: 90ms;
+        pointer-events: none;
+        opacity: 0;
+        top: 5px;
+        left: 5px;
+        right: 5px;
+        bottom: 5px;
+        outline: #2196F3 auto 5px;
+        outline: -moz-mac-focusring auto 5px;
+        outline: -webkit-focus-ring-color auto 5px;
+      }
+
+      .image-link:focus > shop-image::after {
+        opacity: 1;
+      }
+
+      .item {
+        display: block;
+        text-decoration: none;
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      shop-image {
+        position: relative;
+        height: 320px;
+        overflow: hidden;
+        --shop-image-img: {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: -9999px;
+          right: -9999px;
+          max-width: none;
+        };
+      }
+
+      h2 {
+        font-size: 1.3em;
+        font-weight: 500;
+        margin: 32px 0;
+      }
+
+      @media (max-width: 767px) {
+        shop-image {
+          height: 240px;
+        }
+
+        h2 {
+          margin: 24px 0;
+        }
+
+      }
+
+    </style>
+
+    <iron-ajax
+      id="postAjax"
+      auto
+      method="post"
+      url="/api/sweeping"
+      body='[{"foo": "bar"}]'
+      handle-as="json"
+      content-type="application/json"
+      last-response="{{ajaxResponse}}"
+      >
+    </iron-ajax>
+
+    <iron-ajax
+      id="toPasteBin"
+      method="post"
+      url="//httpbin.org/post"
+      body='[{"foo": "{{foo}}"}]'
+      handle-as="json"
+      content-type="application/json"
+      last-response="{{lastResponse}}"
+      >
+    </iron-ajax>
+    <pre>[[json(lastResponse)]]</pre>
+
+<dom-repeat items="[[categories]]">
+      <template strip-whitespace>
+        <div class="item">
+          <a class="image-link" href$="/list/[[item.name]]">
+            <shop-image src="[[item.image]]" alt="[[item.title]]" placeholder-img="[[item.placeholder]]"></shop-image>
+          </a>
+          <h2>[[item.title]]</h2>
+          <button on-click="handleClick">Post to localhost</button>
+        </div>
+      </template>
+    </dom-repeat>
+    <pre>[[json(ajaxResponse)]]</pre>
+    <dom-repeat items="[[answer]]">
+      <span>{{item.name}}</span>
+    </dom-repeat>
+
+  </template>
+
+  <script>
+
+    class ShopHome extends Polymer.Element {
+
+      static get is() { return 'shop-home'; }
+
+      static get properties() { return {
+
+        categories: {
+          type: Array
+        },
+
+        visible: {
+          type: Boolean,
+          observer: '_visibleChanged'
+        },
+
+        answer: {
+          type: Array,
+          value: ['test']
+        },
+
+        echo: {
+          type: String,
+          value: ''
+        }
+      }}
+
+      _visibleChanged(visible) {
+        if (visible) {
+          this.dispatchEvent(new CustomEvent('change-section', {
+            bubbles: true, composed: true, detail: {title: 'Home'}}));
+        }
+      }
+
+      handleClick() {
+          this.$.postAjax.generateRequest();
+      }
+      handleResponse(data) {
+          this.answer = data.detail.response;
+      }
+
+      _handleResponse(event, request) {
+          var response = request.response;
+          this.echo = JSON.stringify(response);
+      }
+ 
+      json(obj) {
+        return JSON.stringify(obj, null, 2);
+      }
+    }
+
+    customElements.define(ShopHome.is, ShopHome);
+
+  </script>
+
+</dom-module>
